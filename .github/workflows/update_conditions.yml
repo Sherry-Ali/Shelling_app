@@ -1,0 +1,16 @@
+name: Live Conditions Updater
+
+on:
+  schedule:
+    # Runs every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+jobs:
+  update-conditions:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Vercel Cron API
+        run: |
+          curl -X GET "https://fl-shell-finder.vercel.app/api/cron/update-conditions" -H "Accept: application/json"

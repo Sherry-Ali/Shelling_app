@@ -1,0 +1,296 @@
+### High-level overview
+
+**App name (working):** Florida Shell Finder  
+**Core idea:** Map‑based app that shows **real‑time shelling conditions** at Florida beaches and lets users pick a shell and see **the best beaches to find it today**.
+
+---
+
+## 1. Target platforms and users
+
+- **Platforms:**
+  - **Phase 1:** Mobile‑first web app (React / Next.js or similar)
+  - **Phase 2:** Native apps via React Native / Expo (optional)
+
+- **Primary users:**
+  - Casual beachgoers
+  - Dedicated shellers
+  - Tourists planning day trips
+
+- **Core user journeys:**
+  - **Journey A:** “I want to go shelling today—where should I go?”
+  - **Journey B:** “I really want to find *this* shell—where’s my best shot today?”
+  - **Journey C:** “I’m at a beach—what shells can I expect to find here?”
+
+---
+
+## 2. System architecture
+
+### 2.1 Overall architecture
+
+- **Client (Frontend):**
+  - React (web) or React Native (mobile)
+  - Map library: Mapbox GL JS or Leaflet
+  - Talks to backend via REST/JSON APIs
+
+- **Backend:**
+  - Node.js (Express / Fastify) or Python (FastAPI)
+  - Responsible for:
+    - Serving REST APIs
+    - Fetching and caching NOAA/USGS data
+    - Computing shelling scores
+    - Managing users, favorites, reports
+
+- **Database:**
+  - PostgreSQL (recommended) with the schema we defined
+  - Optional: Redis for caching recent conditions and scores
+
+- **External integrations:**
+  - NOAA Tides & Currents
+  - NOAA Marine Forecast / NDBC stations
+  - Optional: USGS turbidity data
+  - Optional: Beach webcams (read‑only links)
+
+---
+
+## 3. Data model (summary)
+
+Backed by the SQL schema you already have.
+
+### 3.1 Core tables
+
+- **shells**
+  - Species metadata (name, size, habitat, seasonality, rarity, description)
+
+- **shell_photos**
+  - Multiple photos per shell
+
+- **shell_lookalikes**
+  - Many‑to‑many relationships between similar shells
+
+- **beaches**
+  - Florida beaches with coordinates, county, access info, NOAA/tide station IDs
+
+- **beach_shell_likelihood**
+  - For each beach + shell: likelihood_score (1–5)
+
+- **conditions**
+  - Latest environmental conditions per beach (wind, waves, tide, clarity, shelling_score)
+
+- **shell_conditions**
+  - Shell‑specific scores per beach (tide_score, wave_score, clarity_score, shell_specific_score)
+
+- **user_reports** (optional)
+  - Crowdsourced shell sightings and ratings
+
+- **user_favorites** (optional)
+  - User‑saved beaches
+
+---
+
+## 4. Core features and behavior
+
+### 4.1 Interactive map
+
+- **Default view:**
+  - Map of Florida with markers for each beach
+  - Marker color based on **current shelling_score** (e.g., 0–100 → red/yellow/green)
+- **Tap a beach marker:**
+  - Show:
+    - Beach name, county
+    - Current shelling_score
+    - Key conditions (wind, waves, tide, clarity)
+    - Top shells likely at this beach (from beach_shell_likelihood)
+    - “View details” → beach detail screen
+
+### 4.2 Beach detail screen
+
+- **Sections:**
+  - **Today’s Shelling Score**
+    - Score (0–100) + label (Poor/Fair/Good/Excellent)
+    - Breakdown: tide, waves, wind, clarity, storm bonus
+  - **Conditions**
+    - Wind speed/direction
+    - Wave height
+    - Tide level / next low tide
+    - Water temp
+  - **Shells at this beach**
+    - List of shells with:
+      - Likelihood (1–5)
+      - Rarity
+      - Quick link to shell detail
+  - **User reports** (if enabled)
+    - Recent sightings and notes
+
+### 4.3 Shell encyclopedia
+
+- **Shell list:**
+  - Filter by:
+    - Color, size, rarity, habitat
+  - Each shell card:
+    - Photo, common name, rarity, quick “Best beaches today” button
+
+- **Shell detail screen:**
+  - Photos, description, habitat, seasonality, rarity
+  - **“Best beaches today for this shell”**:
+    - Ranked list of beaches with shell_specific_score
+    - Each row: beach name, score, key conditions summary
+  - Map overlay showing only beaches where:
+    - likelihood_score ≥ threshold (e.g., 3/5)
+    - shell_specific_score above a minimum (e.g., 60/100)
+
+---
+
+## 5. Scoring and conditions engine
+
+### 5.1 Data ingestion
+
+- **Scheduler (cron job / background worker):**
+  - Runs every 30–60 minutes
+  - For each beach:
+    - Fetch NOAA/USGS data using its station IDs
+    - Compute:
+      - wind_speed, wave_height, tide_level, water_temp, turbidity, storm_recent
+      - clarity_score (0–100)
+      - shelling_score (0–100)
+    - Insert a new row into `conditions`
+
+### 5.2 Shelling score (per beach)
+
+- Inputs:
+  - Tide score (low tide better)
+  - Wave score (lower waves better)
+  - Wind score (lower wind better)
+  - Clarity score
+  - Storm bonus (recent storms can increase shell turnover)
+  - Average shell likelihood at that beach
+
+- Example formula:
+  \[
+  ShellingScore =
+  0.25(\text{Tide}) +
+  0.20(\text{Waves}) +
+  0.20(\text{Wind}) +
+  0.15(\text{Clarity}) +
+  0.10(\text{StormBonus}) +
+  0.10(\text{AvgShellLikelihood})
+  \]
+
+### 5.3 Shell‑specific score (per shell + beach)
+
+- For each shell + beach pair where likelihood_score ≥ 1:
+  - Use:
+    - `conditions` (latest row for that beach)
+    - `beach_shell_likelihood.likelihood_score`
+    - Optional: shell preferences (tide sensitivity, wave tolerance, etc.)
+
+- Example formula:
+  \[
+  ShellSpecificScore =
+  0.40(\text{Likelihood}) +
+  0.20(\text{TideScoreForThisShell}) +
+  0.20(\text{WaveScoreForThisShell}) +
+  0.10(\text{Clarity}) +
+  0.10(\text{StormBonus})
+  \]
+
+- Store result in `shell_conditions` with timestamp.
+
+---
+
+## 6. API specification (REST, high level)
+
+### 6.1 Public endpoints
+
+- **GET `/beaches`**
+  - Returns list of beaches with:
+    - id, name, county, coordinates
+    - latest shelling_score
+
+- **GET `/beaches/{id}`**
+  - Returns:
+    - Beach metadata
+    - Latest conditions
+    - Top shells (by likelihood_score)
+
+- **GET `/beaches/{id}/conditions`**
+  - Returns latest and/or recent historical conditions
+
+- **GET `/shells`**
+  - Returns list of shells with basic info and filters
+
+- **GET `/shells/{id}`**
+  - Returns shell details, photos, lookalikes
+
+- **GET `/shells/{id}/best-beaches-today`**
+  - Query params: `limit`, `min_score`
+  - Returns ranked list of beaches with:
+    - shell_specific_score
+    - key conditions
+
+- **GET `/shells/{id}/map-overlay`**
+  - Returns beaches + scores for map visualization
+
+### 6.2 Optional user endpoints
+
+- **POST `/user/reports`**
+  - Body: beach_id, shells_found, notes, rating
+
+- **GET `/user/reports?beach_id=...`**
+
+- **POST `/user/favorites`**
+  - Body: beach_id
+
+- **GET `/user/favorites`**
+
+---
+
+## 7. Non-functional requirements
+
+- **Performance:**
+  - Map view should load in < 2 seconds on typical mobile data
+  - API responses cached for 1–5 minutes where possible
+
+- **Reliability:**
+  - If NOAA data is temporarily unavailable:
+    - Use last known conditions
+    - Mark data as “stale” in UI
+
+- **Scalability:**
+  - Designed to support:
+    - Dozens to hundreds of beaches
+    - Tens of thousands of users
+
+- **Security:**
+  - HTTPS everywhere
+  - API keys for NOAA/other services stored server‑side
+  - Simple auth (email/password or OAuth) if you add user accounts
+
+---
+
+## 8. MVP vs future features
+
+### MVP (what you build first)
+
+- Beaches + shells database
+- NOAA integration + conditions table
+- Shelling score per beach
+- Shell‑specific score per shell + beach
+- Map with:
+  - Beach markers
+  - Beach detail screen
+- Shell encyclopedia + “Best beaches today for this shell”
+
+### Future ideas
+
+- User accounts, favorites, and reports
+- “I found this shell” photo uploads
+- Push notifications:
+  - “Tomorrow morning looks excellent for shelling at Sanibel”
+- Offline mode for people already at the beach
+
+---
+
+If you want, next I can:
+
+- Turn this into a **GitHub‑ready README/technical design doc**, or  
+- Help you pick a **specific stack** (e.g., “Next.js + Supabase + Mapbox”) and outline the first implementation steps.
