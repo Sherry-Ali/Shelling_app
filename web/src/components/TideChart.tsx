@@ -7,22 +7,16 @@ export default function TideChart({ currentTide, forecasts = [] }: { currentTide
   const formatTime = (timeStr: string) => {
     if (!timeStr) return '';
     try {
-      // Safely parse "YYYY-MM-DD HH:MM"
-      const parts = timeStr.split(' ');
-      if (parts.length === 2) {
-        const timeParts = parts[1].split(':');
-        let hours = parseInt(timeParts[0]);
-        const mins = timeParts[1];
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; 
-        return `${hours}:${mins} ${ampm}`;
-      }
-      return timeStr;
+      const date = new Date(timeStr);
+      // Return short time like '5:30 AM'
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     } catch {
       return timeStr;
     }
   };
+
+  // Get current time formatted
+  const currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
   // We only show up to 4 forecasts to fit the chart neatly
   const displayForecasts = forecasts.slice(0, 4);
@@ -91,7 +85,7 @@ export default function TideChart({ currentTide, forecasts = [] }: { currentTide
           
           {/* Current Tide Marker */}
           <circle cx="200" cy="100" r="8" fill="var(--accent)" stroke="white" strokeWidth="2" />
-          <text x="200" y="80" fontSize="15" fontWeight="bold" fill="var(--accent)" textAnchor="middle">Now ({currentTide}ft)</text>
+          <text x="200" y="80" fontSize="15" fontWeight="bold" fill="var(--accent)" textAnchor="middle">{currentTimeStr} ({currentTide}ft)</text>
           
           <line x1="200" y1="100" x2="200" y2="200" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 4" />
         </svg>
