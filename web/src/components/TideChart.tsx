@@ -2,8 +2,35 @@
 
 import React from 'react';
 
-export default function TideChart({ currentTide }: { currentTide: number }) {
-  // A beautiful SVG sine wave to represent the daily tide cycle
+export default function TideChart({ currentTide, forecasts = [] }: { currentTide: number, forecasts?: any[] }) {
+  // Format the time from "YYYY-MM-DD HH:MM" to "h:mm AM/PM"
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return '';
+    try {
+      // Safely parse "YYYY-MM-DD HH:MM"
+      const parts = timeStr.split(' ');
+      if (parts.length === 2) {
+        const timeParts = parts[1].split(':');
+        let hours = parseInt(timeParts[0]);
+        const mins = timeParts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; 
+        return `${hours}:${mins} ${ampm}`;
+      }
+      return timeStr;
+    } catch {
+      return timeStr;
+    }
+  };
+
+  // We only show up to 4 forecasts to fit the chart neatly
+  const displayForecasts = forecasts.slice(0, 4);
+
+  // Pad the array if there are less than 4 forecasts
+  while (displayForecasts.length < 4) {
+    displayForecasts.push({ prediction_time: '', water_level: 0 });
+  }
   return (
     <div style={{ width: '100%', overflowX: 'auto', padding: '10px 0', borderTop: '1px solid var(--card-border)' }}>
       <h3 style={{ fontSize: '1rem', color: '#64748b', marginBottom: '16px' }}>Daily Tide Forecast</h3>
@@ -33,18 +60,34 @@ export default function TideChart({ currentTide }: { currentTide: number }) {
             strokeLinecap="round"
           />
           
-          {/* Labels */}
-          <text x="100" y="30" fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">5:30 AM</text>
-          <text x="100" y="15" fontSize="12" fill="#64748b" textAnchor="middle">3.2ft</text>
+          {/* Labels dynamically generated */}
+          <text x="100" y={displayForecasts[0].type === 'H' ? 30 : 180} fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">
+            {formatTime(displayForecasts[0].prediction_time) || "5:30 AM"}
+          </text>
+          <text x="100" y={displayForecasts[0].type === 'H' ? 15 : 195} fontSize="12" fill="#64748b" textAnchor="middle">
+            {displayForecasts[0].prediction_time ? `${displayForecasts[0].water_level}ft` : "3.2ft"}
+          </text>
 
-          <text x="300" y="180" fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">11:45 AM</text>
-          <text x="300" y="195" fontSize="12" fill="#64748b" textAnchor="middle">0.4ft</text>
+          <text x="300" y={displayForecasts[1].type === 'H' ? 30 : 180} fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">
+            {formatTime(displayForecasts[1].prediction_time) || "11:45 AM"}
+          </text>
+          <text x="300" y={displayForecasts[1].type === 'H' ? 15 : 195} fontSize="12" fill="#64748b" textAnchor="middle">
+            {displayForecasts[1].prediction_time ? `${displayForecasts[1].water_level}ft` : "0.4ft"}
+          </text>
 
-          <text x="500" y="30" fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">6:15 PM</text>
-          <text x="500" y="15" fontSize="12" fill="#64748b" textAnchor="middle">2.8ft</text>
+          <text x="500" y={displayForecasts[2].type === 'H' ? 30 : 180} fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">
+            {formatTime(displayForecasts[2].prediction_time) || "6:15 PM"}
+          </text>
+          <text x="500" y={displayForecasts[2].type === 'H' ? 15 : 195} fontSize="12" fill="#64748b" textAnchor="middle">
+            {displayForecasts[2].prediction_time ? `${displayForecasts[2].water_level}ft` : "2.8ft"}
+          </text>
 
-          <text x="700" y="180" fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">11:50 PM</text>
-          <text x="700" y="195" fontSize="12" fill="#64748b" textAnchor="middle">0.6ft</text>
+          <text x="700" y={displayForecasts[3].type === 'H' ? 30 : 180} fontSize="14" fill="#334155" fontWeight="600" textAnchor="middle">
+            {formatTime(displayForecasts[3].prediction_time) || "11:50 PM"}
+          </text>
+          <text x="700" y={displayForecasts[3].type === 'H' ? 15 : 195} fontSize="12" fill="#64748b" textAnchor="middle">
+            {displayForecasts[3].prediction_time ? `${displayForecasts[3].water_level}ft` : "0.6ft"}
+          </text>
           
           {/* Current Tide Marker */}
           <circle cx="200" cy="100" r="8" fill="var(--accent)" stroke="white" strokeWidth="2" />
