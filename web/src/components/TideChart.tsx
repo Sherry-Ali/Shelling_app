@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export default function TideChart({ currentTide, forecasts = [] }: { currentTide: number, forecasts?: any[] }) {
+export default function TideChart({ currentTide, forecasts = [], recordedAt }: { currentTide: number, forecasts?: any[], recordedAt?: string }) {
   // Format the time from "YYYY-MM-DD HH:MM" to "h:mm AM/PM"
   const formatTime = (timeStr: string) => {
     if (!timeStr) return '';
@@ -15,9 +15,13 @@ export default function TideChart({ currentTide, forecasts = [] }: { currentTide
     }
   };
 
-  // Get current time formatted
-  const currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
+  // Get current time formatted from recordedAt (or fallback)
+  let currentTimeStr = '';
+  if (recordedAt) {
+    currentTimeStr = new Date(recordedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  } else {
+    currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
   // We only show up to 4 forecasts to fit the chart neatly
   const displayForecasts = forecasts.slice(0, 4);
 

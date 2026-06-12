@@ -21,6 +21,7 @@ CREATE TABLE beaches (
   longitude DECIMAL(11, 8),
   access_info TEXT,
   noaa_station_id VARCHAR(50),
+  beach_facing VARCHAR(50),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -47,11 +48,11 @@ CREATE TABLE conditions (
 
 -- 2. Insert Dummy Data
 -- Beaches
-INSERT INTO beaches (id, name, county, latitude, longitude, access_info) VALUES
-('b1111111-1111-1111-1111-111111111111', 'Sanibel Island (Blind Pass)', 'Lee', 26.4831, -82.1818, 'Public parking available, fills up early.'),
-('b2222222-2222-2222-2222-222222222222', 'Captiva Island', 'Lee', 26.5245, -82.1906, 'Limited parking, great sunset views.'),
-('b3333333-3333-3333-3333-333333333333', 'Venice Beach', 'Sarasota', 27.0988, -82.4578, 'Shark tooth capital, free parking.'),
-('b4444444-4444-4444-4444-444444444444', 'Honeymoon Island', 'Pinellas', 28.0638, -82.8286, 'State park fee required. Walk to north end for shells.');
+INSERT INTO beaches (id, name, county, latitude, longitude, access_info, beach_facing) VALUES
+('b1111111-1111-1111-1111-111111111111', 'Sanibel Island (Blind Pass)', 'Lee', 26.4831, -82.1818, 'Public parking available, fills up early.', 'SW'),
+('b2222222-2222-2222-2222-222222222222', 'Captiva Island', 'Lee', 26.5245, -82.1906, 'Limited parking, great sunset views.', 'W'),
+('b3333333-3333-3333-3333-333333333333', 'Venice Beach', 'Sarasota', 27.0988, -82.4578, 'Shark tooth capital, free parking.', 'W'),
+('b4444444-4444-4444-4444-444444444444', 'Honeymoon Island', 'Pinellas', 28.0638, -82.8286, 'State park fee required. Walk to north end for shells.', 'W');
 
 -- Shells
 INSERT INTO shells (id, name, common_name, size_range, habitat, rarity, description) VALUES

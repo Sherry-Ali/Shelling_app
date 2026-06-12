@@ -157,10 +157,11 @@ Backed by the SQL schema you already have.
 ### 5.2 Shelling score (per beach)
 
 - Inputs:
-  - Tide score (low tide better)
-  - Wave score (lower waves better)
-  - Wind score (lower wind better)
-  - Clarity score
+  - Tide score (lower tide level = higher score)
+  - Wave score (lower wave height = higher score; flat water is better for shelling)
+  - Wind speed score (lower wind speed = higher score)
+  - Wind direction bonus (Offshore wind: when the wind is blowing in the *same* direction that the beach faces. E.g., for a West-facing Gulf beach like Venice, a wind blowing towards the West is offshore).
+  - Clarity score (clearer water = higher score)
   - Storm bonus (recent storms can increase shell turnover)
   - Average shell likelihood at that beach
 
@@ -168,8 +169,9 @@ Backed by the SQL schema you already have.
   \[
   ShellingScore =
   0.25(\text{Tide}) +
-  0.20(\text{Waves}) +
-  0.20(\text{Wind}) +
+  0.20(\text{Waves(Inverse)}) +
+  0.10(\text{WindSpeed(Inverse)}) +
+  0.10(\text{OffshoreWindBonus}) +
   0.15(\text{Clarity}) +
   0.10(\text{StormBonus}) +
   0.10(\text{AvgShellLikelihood})

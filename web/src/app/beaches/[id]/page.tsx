@@ -13,7 +13,7 @@ export default async function BeachDetail({ params }: { params: Promise<{ id: st
     .select(`
       *,
       conditions (
-        shelling_score, wind_speed, wind_direction, wave_height, tide_level, water_temp, clarity_score
+        shelling_score, wind_speed, wind_direction, wave_height, tide_level, water_temp, clarity_score, recorded_at
       )
     `)
     .eq('id', resolvedParams.id)
@@ -115,7 +115,7 @@ export default async function BeachDetail({ params }: { params: Promise<{ id: st
       {/* TIDE FORECAST TIMELINE */}
       <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'white', letterSpacing: '-0.02em' }}>Tide Forecast</h2>
       <div className="glass-panel" style={{ padding: '0px', marginBottom: '32px', overflowX: 'auto', backgroundColor: 'rgba(255, 255, 255, 0.7)' }}>
-        <TideChart currentTide={latestCondition?.tide_level || 0} forecasts={tideForecasts || []} />
+        <TideChart currentTide={latestCondition?.tide_level || 0} forecasts={tideForecasts || []} recordedAt={latestCondition?.recorded_at} />
       </div>
 
       <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'white', letterSpacing: '-0.02em' }}>Top Shells to Find Here</h2>

@@ -5,21 +5,47 @@ import { supabase } from '@/lib/supabase';
 const mToFt = (m: number) => (m * 3.28084).toFixed(1);
 
 // Helper to calculate shelling score
-function calculateShellingScore(windMph: number, waveFt: number): number {
-  let score = 50; // Base score
+function calculateShellingScore(
+  windMph: number,
+  waveFt: number,
+  tideFt: number,
+  windDir: string,
+  beachFacing: string | null
+): number {
+  let score = 0;
   
-  // Stronger winds = better shells washing up
-  if (windMph > 15) score += 20;
-  else if (windMph > 10) score += 10;
-  else if (windMph < 5) score -= 10;
+  // Tide (25% weight) - Lower is better. 
+  // Max points for tide <= -0.5ft, decreasing linearly to 0 points at tide >= 3.0ft
+  if (tideFt <= -0.5) score += 25;
+  else if (tideFt >= 3.0) score += 0;
+  else score += 25 - ((tideFt + 0.5) / 3.5) * 25;
 
-  // Larger waves bring more shells
-  if (waveFt > 3) score += 20;
-  else if (waveFt > 2) score += 10;
-  else if (waveFt < 1) score -= 10;
+  // Waves (20% weight) - Lower is better (Inverse)
+  if (waveFt <= 0.5) score += 20;
+  else if (waveFt >= 3.0) score += 0;
+  else score += 20 - ((waveFt - 0.5) / 2.5) * 20;
+
+  // Wind Speed (10% weight) - Lower is better (Inverse)
+  if (windMph <= 5) score += 10;
+  else if (windMph >= 20) score += 0;
+  else score += 10 - ((windMph - 5) / 15) * 10;
+
+  // Offshore Wind Bonus (10% weight) - Match windDir to beachFacing
+  if (beachFacing && windDir === beachFacing) {
+    score += 10;
+  }
+
+  // Clarity Placeholder (15% weight)
+  score += 15; 
+  
+  // Avg Shell Likelihood Placeholder (10% weight)
+  score += 10; 
+
+  // Storm Bonus Placeholder (10% weight)
+  score += 0;
 
   // Cap between 0 and 100
-  return Math.min(Math.max(score, 0), 100);
+  return Math.min(Math.max(Math.round(score), 0), 100);
 }
 
 export async function GET(request: Request) {
@@ -116,9 +142,15 @@ export async function GET(request: Request) {
       }
 
       // --- CALCULATIONS ---
-      const shellingScore = calculateShellingScore(windSpeed, waveHeightFt);
       // For current tide level, we just pick the first high/low of the day for the MVP summary
-      const currentTideLvl = tidePredictions.length > 0 ? parseFloat(tidePredictions[0].v).toFixed(1) : 0;
+      const currentTideLvl = tidePredictions.length > 0 ? parseFloat(tidePredictions[0].v).toFixed(1) : "0.0";
+      const shellingScore = calculateShellingScore(
+        windSpeed, 
+        waveHeightFt, 
+        parseFloat(currentTideLvl), 
+        windDir, 
+        beach.beach_facing || null
+      );
 
       // --- UPDATE DATABASE ---
       
