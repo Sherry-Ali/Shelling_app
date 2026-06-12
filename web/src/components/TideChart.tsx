@@ -45,13 +45,13 @@ export default function TideChart({ currentTide, forecasts = [], recordedAt }: {
 
           {/* Water Fill */}
           <path 
-            d="M 0 100 Q 100 0, 200 100 T 400 100 T 600 100 T 800 100 L 800 220 L 0 220 Z" 
+            d={`M 0 100 Q 100 ${displayForecasts[0].type === 'L' ? 200 : 0}, 200 100 T 400 100 T 600 100 T 800 100 L 800 220 L 0 220 Z`}
             fill="rgba(59, 130, 246, 0.1)"
           />
           
           {/* Continuous Tide Line */}
           <path 
-            d="M 0 100 Q 100 0, 200 100 T 400 100 T 600 100 T 800 100" 
+            d={`M 0 100 Q 100 ${displayForecasts[0].type === 'L' ? 200 : 0}, 200 100 T 400 100 T 600 100 T 800 100`}
             fill="none" 
             stroke="#3b82f6" 
             strokeWidth="3"
@@ -88,10 +88,10 @@ export default function TideChart({ currentTide, forecasts = [], recordedAt }: {
           </text>
           
           {/* Current Tide Marker */}
-          <circle cx="200" cy="100" r="8" fill="var(--accent)" stroke="white" strokeWidth="2" />
-          <text x="200" y="80" fontSize="15" fontWeight="bold" fill="var(--accent)" textAnchor="middle">{currentTimeStr} ({currentTide}ft)</text>
+          <circle cx="200" cy="100" r="8" fill="#ea580c" stroke="white" strokeWidth="2" />
+          <text x="200" y="80" fontSize="15" fontWeight="bold" fill="#ea580c" textAnchor="middle">{currentTimeStr} ({currentTide}ft)</text>
           
-          <line x1="200" y1="100" x2="200" y2="200" stroke="var(--accent)" strokeWidth="1" strokeDasharray="4 4" />
+          <line x1="200" y1="100" x2="200" y2="200" stroke="#ea580c" strokeWidth="1" strokeDasharray="4 4" />
         </svg>
       </div>
     </div>
