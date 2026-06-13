@@ -17,6 +17,7 @@ export default async function BeachDetail({ params }: { params: Promise<{ id: st
       )
     `)
     .eq('id', resolvedParams.id)
+    .order('recorded_at', { referencedTable: 'conditions', ascending: false })
     .single();
 
   if (!beach || beachError) {

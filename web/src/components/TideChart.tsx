@@ -25,6 +25,27 @@ export default function TideChart({ currentTide, forecasts = [], recordedAt }: {
   // We only show up to 4 forecasts to fit the chart neatly
   const displayForecasts = forecasts.slice(0, 4);
 
+  // Calculate dynamic X position for the marker
+  let markerX = 200; // default
+  if (recordedAt && displayForecasts.length >= 2 && displayForecasts[0].prediction_time) {
+    const currentMs = new Date(recordedAt).getTime();
+    const times = displayForecasts.map(f => f.prediction_time ? new Date(f.prediction_time).getTime() : 0);
+    
+    if (times[0] && currentMs < times[0]) {
+      markerX = 100 - ((times[0] - currentMs) / (1000 * 60 * 60)) * 30;
+    } else if (times[0] && times[1] && currentMs >= times[0] && currentMs <= times[1]) {
+      markerX = 100 + ((currentMs - times[0]) / (times[1] - times[0])) * 200;
+    } else if (times[1] && times[2] && currentMs > times[1] && currentMs <= times[2]) {
+      markerX = 300 + ((currentMs - times[1]) / (times[2] - times[1])) * 200;
+    } else if (times[2] && times[3] && currentMs > times[2] && currentMs <= times[3]) {
+      markerX = 500 + ((currentMs - times[2]) / (times[3] - times[2])) * 200;
+    } else if (times[3] && currentMs > times[3]) {
+      markerX = 700 + ((currentMs - times[3]) / (1000 * 60 * 60)) * 30;
+    }
+    // keep it on screen
+    markerX = Math.max(30, Math.min(markerX, 770));
+  }
+
   // Pad the array if there are less than 4 forecasts
   while (displayForecasts.length < 4) {
     displayForecasts.push({ prediction_time: '', water_level: 0 });
@@ -88,10 +109,10 @@ export default function TideChart({ currentTide, forecasts = [], recordedAt }: {
           </text>
           
           {/* Current Tide Marker */}
-          <circle cx="200" cy="100" r="8" fill="#ea580c" stroke="white" strokeWidth="2" />
-          <text x="200" y="80" fontSize="15" fontWeight="bold" fill="#ea580c" textAnchor="middle">{currentTimeStr} ({currentTide}ft)</text>
+          <circle cx={markerX} cy="100" r="8" fill="#ea580c" stroke="white" strokeWidth="2" />
+          <text x={markerX} y="80" fontSize="15" fontWeight="bold" fill="#ea580c" textAnchor="middle">{currentTimeStr} ({currentTide}ft)</text>
           
-          <line x1="200" y1="100" x2="200" y2="200" stroke="#ea580c" strokeWidth="1" strokeDasharray="4 4" />
+          <line x1={markerX} y1="100" x2={markerX} y2="200" stroke="#ea580c" strokeWidth="1" strokeDasharray="4 4" />
         </svg>
       </div>
     </div>
