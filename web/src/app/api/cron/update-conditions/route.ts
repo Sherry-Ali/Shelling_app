@@ -14,25 +14,25 @@ function calculateShellingScore(
 ): number {
   let score = 0;
   
-  // Tide (25% weight) - Lower is better. 
+  // Tide (10% weight) - Lower is better. 
   // Max points for tide <= -0.5ft, decreasing linearly to 0 points at tide >= 3.0ft
-  if (tideFt <= -0.5) score += 25;
+  if (tideFt <= -0.5) score += 10;
   else if (tideFt >= 3.0) score += 0;
-  else score += 25 - ((tideFt + 0.5) / 3.5) * 25;
+  else score += 10 - ((tideFt + 0.5) / 3.5) * 10;
 
   // Waves (20% weight) - Lower is better (Inverse)
   if (waveFt <= 0.5) score += 20;
   else if (waveFt >= 3.0) score += 0;
   else score += 20 - ((waveFt - 0.5) / 2.5) * 20;
 
-  // Wind Speed (10% weight) - Lower is better (Inverse)
-  if (windMph <= 5) score += 10;
+  // Wind Speed (30% weight) - Lower is better (Inverse)
+  if (windMph <= 5) score += 30;
   else if (windMph >= 20) score += 0;
-  else score += 10 - ((windMph - 5) / 15) * 10;
+  else score += 30 - ((windMph - 5) / 15) * 30;
 
-  // Offshore Wind Bonus (10% weight) - Match windDir to beachFacing
+  // Offshore Wind Bonus (5% weight) - Match windDir to beachFacing
   if (beachFacing && windDir === beachFacing) {
-    score += 10;
+    score += 5;
   }
 
   // Clarity Placeholder (15% weight)
@@ -84,8 +84,11 @@ export async function GET(request: Request) {
       // --- FETCH NOAA TIDES ---
       let tidePredictions = [];
       try {
+        const estDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+        const beginDateStr = `${estDate.getFullYear()}${String(estDate.getMonth() + 1).padStart(2, '0')}${String(estDate.getDate()).padStart(2, '0')}`;
+        
         const noaaRes = await fetch(
-          `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=today&station=${stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=json`
+          `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${beginDateStr}&range=48&station=${stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=json`
         );
         const noaaData = await noaaRes.json();
         tidePredictions = noaaData.predictions || [];
