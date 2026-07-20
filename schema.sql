@@ -22,6 +22,8 @@ CREATE TABLE beaches (
   access_info TEXT,
   noaa_station_id VARCHAR(50),
   beach_facing VARCHAR(50),
+  base_clarity_score INTEGER DEFAULT 75,
+  base_shell_score INTEGER DEFAULT 75,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 

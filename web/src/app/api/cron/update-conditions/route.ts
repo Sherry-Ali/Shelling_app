@@ -10,7 +10,9 @@ function calculateShellingScore(
   waveFt: number,
   tideFt: number,
   windDir: string,
-  beachFacing: string | null
+  beachFacing: string | null,
+  baseClarity: number,
+  baseShell: number
 ): number {
   let score = 0;
   
@@ -35,11 +37,11 @@ function calculateShellingScore(
     score += 5;
   }
 
-  // Clarity Placeholder (15% weight)
-  score += 15; 
+  // Clarity Base Score (15% weight)
+  score += (baseClarity / 100) * 15; 
   
-  // Avg Shell Likelihood Placeholder (10% weight)
-  score += 10; 
+  // Avg Shell Likelihood Base Score (10% weight)
+  score += (baseShell / 100) * 10; 
 
   // Storm Bonus Placeholder (10% weight)
   score += 0;
@@ -152,7 +154,9 @@ export async function GET(request: Request) {
         waveHeightFt, 
         parseFloat(currentTideLvl), 
         windDir, 
-        beach.beach_facing || null
+        beach.beach_facing || null,
+        beach.base_clarity_score || 75,
+        beach.base_shell_score || 75
       );
 
       // --- UPDATE DATABASE ---
